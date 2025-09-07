@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stylish To-Do List</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      transition: background 0.4s, color 0.4s;
+    }
+    :root {
+      --text-color: #222;
+      --card-bg: #ffffff;
+      --task-bg: #f7f7f7;
+      --button-bg: #4facfe;
+      --button-text: #ffffff;
+      --accent-color: #00c6ff;
+    }
+    .dark-mode {
+      --text-color: #f5f5f5;
+      --card-bg: #1f1f1f;
+      --task-bg: #2c2c2c;
+      --button-bg: #00c6ff;
+      --button-text: #000;
+      background: linear-gradient(135deg, #1f1f1f, #232526);
+    }
+    .container {
+      background: var(--card-bg);
+      padding: 25px;
+      border-radius: 20px;
+      width: 420px;
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+      transition: background 0.4s;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      font-weight: 600;
+      color: var(--accent-color);
+    }
+    .theme-toggle {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .theme-toggle button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      background: var(--button-bg);
+      color: var(--button-text);
+      font-weight: 600;
+      transition: 0.3s;
+    }
+    .theme-toggle button:hover {
+      opacity: 0.85;
+    }
+    .input-box {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
+    .input-box input, .input-box button {
+      padding: 12px;
+      margin: 6px 0;
+      border-radius: 12px;
+      border: none;
+      background: var(--task-bg);
+      color: var(--text-color);
+      font-size: 14px;
+      transition: 0.3s;
+    }
+    .input-box input:focus {
+      outline: 2px solid var(--accent-color);
+    }
+    .input-box button {
+      background: var(--button-bg);
+      color: var(--button-text);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .filters {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+    }
+    .filters button {
+      flex: 1;
+      margin: 0 4px;
+      padding: 8px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      background: var(--task-bg);
+      color: var(--text-color);
+      font-weight: 500;
+      transition: 0.3s;
+    }
+    .filters button:hover {
+      background: var(--accent-color);
+      color: white;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: var(--task-bg);
+      border-radius: 12px;
+      cursor: grab;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      transition: 0.3s;
+    }
+    li.completed span {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    .delete-btn {
+      background: #ff5c5c;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    .delete-btn:hover {
+      background: #e64545;
+    }
+    .due-date {
+      font-size: 12px;
+      color: #888;
+      margin-left: 10px;
+    }
+    .progress-container {
+      margin: 15px 0;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      background: #ddd;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .progress-bar-inner {
+      height: 10px;
+      width: 0%;
+      background: var(--accent-color);
+      transition: width 0.4s;
+    }
+    #progressText {
+      text-align: center;
+      margin-top: 5px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Stylish To-Do</h1>
+    <div class="theme-toggle">
+      <button onclick="toggleTheme()">Toggle Dark Mode</button>
+    </div>
+
+    <div class="input-box">
+      <input type="text" id="taskInput" placeholder="Enter a task...">
+      <input type="datetime-local" id="dueDateInput">
+      <button onclick="addTask()">Add Task</button>
+      <input type="text" id="searchInput" placeholder="Search tasks..." oninput="filterTasks()">
+    </div>
+
+    <div class="filters">
+      <button onclick="setFilter('all')">All</button>
+      <button onclick="setFilter('active')">Active</button>
+      <button onclick="setFilter('completed')">Completed</button>
+    </div>
+
+    <div class="progress-container">
+      <div class="progress-bar">
+        <div class="progress-bar-inner" id="progressBar"></div>
+      </div>
+      <p id="progressText">0% Completed</p>
+    </div>
+
+    <ul id="taskList"></ul>
+  </div>
+
+  <script>
+    const taskInput = document.getElementById('taskInput');
+    const dueDateInput = document.getElementById('dueDateInput');
+    const searchInput = document.getElementById('searchInput');
+    const taskList = document.getElementById('taskList');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    let isDarkMode = false;
+    let filter = 'all';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadTasks();
+      if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+      }
+      const savedTheme = localStorage.getItem('darkMode');
+      if (savedTheme === 'true') {
+        document.body.classList.add('dark-mode');
+        isDarkMode = true;
+      }
+      updateProgress();
+    });
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+      isDarkMode = !isDarkMode;
+      localStorage.setItem('darkMode', isDarkMode);
+    }
+
+    function addTask() {
+      const taskText = taskInput.value.trim();
+      const dueDate = dueDateInput.value;
+      if (taskText === '') return;
+
+      const li = createTaskElement(taskText, dueDate);
+      taskList.appendChild(li);
+      saveTasks();
+      taskInput.value = '';
+      dueDateInput.value = '';
+      updateProgress();
+    }
+
+    function createTaskElement(text, dueDate) {
+      const li = document.createElement('li');
+      li.setAttribute('draggable', true);
+
+      const span = document.createElement('span');
+      span.textContent = text;
+      span.onclick = () => {
+        li.classList.toggle('completed');
+        saveTasks();
+        updateProgress();
+      };
+
+      const dueSpan = document.createElement('span');
+      if (dueDate) {
+        dueSpan.classList.add('due-date');
+        dueSpan.textContent = `Due: ${new Date(dueDate).toLocaleString()}`;
+        setReminder(text, dueDate);
+      }
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = '×';
+      deleteBtn.classList.add('delete-btn');
+      deleteBtn.onclick = () => {
+        li.remove();
+        saveTasks();
+        updateProgress();
+      };
+
+      li.appendChild(span);
+      if (dueDate) li.appendChild(dueSpan);
+      li.appendChild(deleteBtn);
+
+      li.addEventListener('dragstart', dragStart);
+      li.addEventListener('dragover', dragOver);
+      li.addEventListener('drop', drop);
+
+      return li;
+    }
+
+    function setFilter(type) {
+      filter = type;
+      filterTasks();
+    }
+
+    function filterTasks() {
+      const searchText = searchInput.value.toLowerCase();
+      document.querySelectorAll('#taskList li').forEach(li => {
+        const text = li.querySelector('span').textContent.toLowerCase();
+        const isCompleted = li.classList.contains('completed');
+        let matchesFilter = true;
+
+        if (filter === 'completed' && !isCompleted) matchesFilter = false;
+        if (filter === 'active' && isCompleted) matchesFilter = false;
+        if (!text.includes(searchText)) matchesFilter = false;
+
+        li.style.display = matchesFilter ? 'flex' : 'none';
+      });
+    }
+
+    function saveTasks() {
+      const tasks = [];
+      taskList.querySelectorAll('li').forEach(li => {
+        tasks.push({
+          text: li.querySelector('span').textContent,
+          dueDate: li.querySelector('.due-date')?.textContent.replace('Due: ', '') || null,
+          completed: li.classList.contains('completed')
+        });
+      });
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function loadTasks() {
+      const savedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
+      savedTasks.forEach(task => {
+        const li = createTaskElement(task.text, task.dueDate ? new Date(task.dueDate).toISOString() : null);
+        if (task.completed) li.classList.add('completed');
+        taskList.appendChild(li);
+      });
+    }
+
+    function updateProgress() {
+      const allTasks = document.querySelectorAll('#taskList li').length;
+      const completedTasks = document.querySelectorAll('#taskList li.completed').length;
+      const percentage = allTasks ? Math.round((completedTasks / allTasks) * 100) : 0;
+      progressBar.style.width = percentage + '%';
+      progressText.textContent = `${percentage}% Completed`;
+    }
+
+    function setReminder(taskText, dueDate) {
+      const timeDiff = new Date(dueDate) - new Date();
+      if (timeDiff > 0) {
+        setTimeout(() => {
+          if (Notification.permission === "granted") {
+            new Notification("Task Reminder", { body: `It's time for: ${taskText}` });
+          }
+        }, timeDiff);
+      }
+    }
+
+    let draggedItem = null;
+    function dragStart(e) {
+      draggedItem = e.target;
+      e.dataTransfer.effectAllowed = "move";
+    }
+    function dragOver(e) {
+      e.preventDefault();
+    }
+    function drop(e) {
+      e.preventDefault();
+      if (draggedItem && draggedItem !== e.target && e.target.tagName === 'LI') {
+        taskList.insertBefore(draggedItem, e.target.nextSibling);
+        saveTasks();
+        updateProgress();
+      }
+    }
+  </script>
+
+</body>
+</html>
