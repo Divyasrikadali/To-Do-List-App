@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stylish To-Do List</title>
+  <title>Pinned Brilliant To-Do</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #4facfe, #00f2fe);
-      color: var(--text-color);
+      background: linear-gradient(135deg, #ff6a00, #ee0979, #4facfe, #00f2fe);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -17,28 +18,38 @@
       margin: 0;
       transition: background 0.4s, color 0.4s;
     }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
     :root {
       --text-color: #222;
       --card-bg: #ffffff;
       --task-bg: #f7f7f7;
-      --button-bg: #4facfe;
-      --button-text: #ffffff;
-      --accent-color: #00c6ff;
+      --button-bg: linear-gradient(45deg, #ff6a00, #ee0979);
+      --button-text: #fff;
+      --accent-color: #4facfe;
+      --success-color: #6ee7b7;
     }
     .dark-mode {
       --text-color: #f5f5f5;
       --card-bg: #1f1f1f;
       --task-bg: #2c2c2c;
-      --button-bg: #00c6ff;
-      --button-text: #000;
-      background: linear-gradient(135deg, #1f1f1f, #232526);
+      --button-bg: linear-gradient(45deg, #00c6ff, #0072ff);
+      --button-text: #fff;
+      --accent-color: #ff9a9e;
+      --success-color: #34d399;
+      background: linear-gradient(135deg, #232526, #414345);
+      background-size: cover;
     }
     .container {
       background: var(--card-bg);
       padding: 25px;
       border-radius: 20px;
       width: 420px;
-      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+      max-width: 90%;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
       transition: background 0.4s;
     }
     h1 {
@@ -62,7 +73,8 @@
       transition: 0.3s;
     }
     .theme-toggle button:hover {
-      opacity: 0.85;
+      opacity: 0.9;
+      transform: scale(1.05);
     }
     .input-box {
       display: flex;
@@ -123,14 +135,26 @@
       background: var(--task-bg);
       border-radius: 12px;
       cursor: grab;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       transition: 0.3s;
+      position: relative;
+    }
+    li.completed {
+      background: var(--success-color);
+      color: #fff;
     }
     li.completed span {
       text-decoration: line-through;
-      opacity: 0.6;
+      opacity: 0.8;
     }
-    .delete-btn {
+    li.overdue {
+      border: 2px solid #ff4d4d;
+      background: #ffeaea;
+    }
+    li.pinned {
+      border-left: 5px solid gold;
+    }
+    .delete-btn, .pin-btn {
       background: #ff5c5c;
       color: white;
       border: none;
@@ -139,9 +163,17 @@
       cursor: pointer;
       font-weight: bold;
       transition: 0.3s;
+      margin-left: 5px;
+    }
+    .pin-btn {
+      background: gold;
+      color: black;
     }
     .delete-btn:hover {
       background: #e64545;
+    }
+    .pin-btn:hover {
+      background: orange;
     }
     .due-date {
       font-size: 12px;
@@ -174,7 +206,7 @@
 <body>
 
   <div class="container">
-    <h1>Stylish To-Do</h1>
+    <h1>To-Do List</h1>
     <div class="theme-toggle">
       <button onclick="toggleTheme()">Toggle Dark Mode</button>
     </div>
@@ -211,6 +243,7 @@
     const progressText = document.getElementById('progressText');
     let isDarkMode = false;
     let filter = 'all';
+    let draggedItem = null;
 
     document.addEventListener('DOMContentLoaded', () => {
       loadTasks();
@@ -236,7 +269,7 @@
       const dueDate = dueDateInput.value;
       if (taskText === '') return;
 
-      const li = createTaskElement(taskText, dueDate);
+      const li = createTaskElement(taskText, dueDate, false);
       taskList.appendChild(li);
       saveTasks();
       taskInput.value = '';
@@ -244,9 +277,11 @@
       updateProgress();
     }
 
-    function createTaskElement(text, dueDate) {
+    function createTaskElement(text, dueDate, pinned) {
       const li = document.createElement('li');
       li.setAttribute('draggable', true);
+      if (dueDate) li.dataset.dueDate = dueDate;
+      if (pinned) li.classList.add('pinned');
 
       const span = document.createElement('span');
       span.textContent = text;
@@ -255,12 +290,20 @@
         saveTasks();
         updateProgress();
       };
+      span.ondblclick = () => {
+        const newText = prompt("Edit task:", span.textContent);
+        if (newText) {
+          span.textContent = newText.trim();
+          saveTasks();
+        }
+      };
 
       const dueSpan = document.createElement('span');
       if (dueDate) {
         dueSpan.classList.add('due-date');
         dueSpan.textContent = `Due: ${new Date(dueDate).toLocaleString()}`;
         setReminder(text, dueDate);
+        checkOverdue(li, dueDate);
       }
 
       const deleteBtn = document.createElement('button');
@@ -272,8 +315,20 @@
         updateProgress();
       };
 
+      const pinBtn = document.createElement('button');
+      pinBtn.textContent = '📌';
+      pinBtn.classList.add('pin-btn');
+      pinBtn.onclick = () => {
+        li.classList.toggle('pinned');
+        if (li.classList.contains('pinned')) {
+          taskList.prepend(li);
+        }
+        saveTasks();
+      };
+
       li.appendChild(span);
       if (dueDate) li.appendChild(dueSpan);
+      li.appendChild(pinBtn);
       li.appendChild(deleteBtn);
 
       li.addEventListener('dragstart', dragStart);
@@ -281,6 +336,13 @@
       li.addEventListener('drop', drop);
 
       return li;
+    }
+
+    function checkOverdue(li, dueDate) {
+      const now = new Date();
+      if (new Date(dueDate) < now && !li.classList.contains('completed')) {
+        li.classList.add('overdue');
+      }
     }
 
     function setFilter(type) {
@@ -308,8 +370,9 @@
       taskList.querySelectorAll('li').forEach(li => {
         tasks.push({
           text: li.querySelector('span').textContent,
-          dueDate: li.querySelector('.due-date')?.textContent.replace('Due: ', '') || null,
-          completed: li.classList.contains('completed')
+          dueDate: li.dataset.dueDate || null,
+          completed: li.classList.contains('completed'),
+          pinned: li.classList.contains('pinned')
         });
       });
       localStorage.setItem('tasks', JSON.stringify(tasks));
@@ -318,9 +381,10 @@
     function loadTasks() {
       const savedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
       savedTasks.forEach(task => {
-        const li = createTaskElement(task.text, task.dueDate ? new Date(task.dueDate).toISOString() : null);
+        const li = createTaskElement(task.text, task.dueDate, task.pinned);
         if (task.completed) li.classList.add('completed');
-        taskList.appendChild(li);
+        if (task.pinned) taskList.prepend(li);
+        else taskList.appendChild(li);
       });
     }
 
@@ -343,7 +407,6 @@
       }
     }
 
-    let draggedItem = null;
     function dragStart(e) {
       draggedItem = e.target;
       e.dataTransfer.effectAllowed = "move";
