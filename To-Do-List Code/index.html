@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pinned Brilliant To-Do</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>To-Do List</h1>
+    <div class="theme-toggle"><button onclick="toggleTheme()">Toggle Dark Mode</button></div>
+
+    <div class="input-box">
+      <input type="text" id="taskInput" placeholder="Enter a task...">
+      <input type="datetime-local" id="dueDateInput">
+      <select id="categoryInput">
+        <option value="work">Work</option>
+        <option value="personal">Personal</option>
+        <option value="study">Study</option>
+        <option value="shopping">Shopping</option>
+      </select>
+      <select id="levelInput">
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+      </select>
+      <button onclick="addTask()">Add Task</button>
+      <input type="text" id="searchInput" placeholder="Search tasks..." oninput="filterTasks()">
+    </div>
+
+    <div class="filters">
+      <button onclick="setFilter('all')">All</button>
+      <button onclick="setFilter('active')">Active</button>
+      <button onclick="setFilter('completed')">Completed</button>
+      <button onclick="setFilter('work')">Work</button>
+      <button onclick="setFilter('personal')">Personal</button>
+      <button onclick="setFilter('study')">Study</button>
+      <button onclick="setFilter('shopping')">Shopping</button>
+    </div>
+
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-bar-inner" id="progressBar"></div></div>
+      <p id="progressText">0% Completed</p>
+    </div>
+
+    <ul id="taskList"></ul>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
